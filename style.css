@@ -1,0 +1,94 @@
+* {
+    background-color: black;
+    /* position: absolute;
+    top: 40%;
+    left: 50%; */
+}
+
+#username {
+    color: yellow;
+    font-size: x-large;
+    /* display: flex;
+    align-items: center;
+    justify-content: center; */
+    /* position: absolute;
+    top: 30%;
+    left: 35%; */
+}
+
+input {
+    color: white;
+    font-size: xx-large;
+}
+
+#enter {
+    color: whitesmoke;
+    border-radius: 30%;
+    font-size: large;
+    /* position: absolute;
+    top: 250%;
+    left: 35%; */
+}
+
+#enter:hover {
+    color: tomato;
+}
+
+#greeting {
+    color: pink;
+}
+
+#chatarea {
+    position: absolute;
+    bottom: 10%;
+}
+
+
+
+
+
+#typingbox {
+    background-color: black;
+    color: white;
+    border-color: 15px white;
+    resize: none
+}
+#typeenter {
+    /* background-color: yellow; */
+    color: gray;
+    position: absolute;
+    bottom: 15%;
+}
+
+
+
+.videoicon {
+    color: #c5b8a5;
+    cursor: pointer;
+}
+
+.videoicon:hover {
+    color: #a29988;
+    position: relative;
+    top: 1px;
+    left: 1px;
+}
+
+#vid {
+    width: 20%;
+    /* border: solid white 2px;  */
+    border-radius: 10%;
+    position:absolute;
+    bottom:20px;
+    right:20px;
+}
+
+.hangupicon {
+    color: rgba(247, 10, 10, 0.596);
+    position: absolute;
+    bottom:20px;
+    right: 40vw;
+}
+.hangupicon:hover {
+    color: #af400d;
+}
