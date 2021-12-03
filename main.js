@@ -109,84 +109,84 @@ addEventListener('keydown', sendEnter);
 //問題：textarea會空行
 
 
-var video = document.querySelector('video');
+// var video = document.querySelector('video');
 
 
-function successCallback(gotstream){
-    //Make the stream avaliable to the console for introspection
-    window.stream = gotstream;
-    //Attach the return stream to the <video> element in the HTML page
-    video.srcObject = gotstream;
-    video.play();
+// function successCallback(gotstream){
+//     //Make the stream avaliable to the console for introspection
+//     window.stream = gotstream;
+//     //Attach the return stream to the <video> element in the HTML page
+//     video.srcObject = gotstream;
+//     video.play();
 
-    $(".videoicon").remove();
+//     $(".videoicon").remove();
 
-    // const newIcon = document.createElement('div');
-    var myIcon = document.getElementById('WebRTC');
-    var newIcon = document.createElement('div')
-    newIcon.innerHTML= `
-        <i class="hangupicon fas fa-video-slash fa-2x"></i>
-    `;
-    // myIcon.appendChild(hangupIcon);
+//     // const newIcon = document.createElement('div');
+//     var myIcon = document.getElementById('WebRTC');
+//     var newIcon = document.createElement('div')
+//     newIcon.innerHTML= `
+//         <i class="hangupicon fas fa-video-slash fa-2x"></i>
+//     `;
+//     // myIcon.appendChild(hangupIcon);
 
-    myIcon.appendChild(newIcon);
+//     myIcon.appendChild(newIcon);
 
-    // el.innerHTML = '<i class="fas fa-video-slash"></i>'
-}
-
-
-
-WebRTC.addEventListener('click', (event) => {
-    if(event.target.matches('.videoicon')){
-        navigator.getUserMedia({audio:false, video:true}, successCallback, function(error) {
-            log("navigator.getMedia error: ", error);
-        });
-        // 讓 video 移動至左上角   
-        // 新增 掛電話icon: 功能- 移除影像、鏡頭
-        // 插入 <video autoplay></video> 在 <div id="WebRTC">
-    }
-    
-});
-// var stream;
-// var videoOff = {
-//     video: false
+//     // el.innerHTML = '<i class="fas fa-video-slash"></i>'
 // }
 
-// function getMedia(constraints){
-//     if(!!stream){
-//         video.src = null;
-//         stream.stop();
+
+
+// WebRTC.addEventListener('click', (event) => {
+//     if(event.target.matches('.videoicon')){
+//         navigator.getUserMedia({audio:false, video:true}, successCallback, function(error) {
+//             log("navigator.getMedia error: ", error);
+//         });
+//         // 讓 video 移動至左上角   
+//         // 新增 掛電話icon: 功能- 移除影像、鏡頭
+//         // 插入 <video autoplay></video> 在 <div id="WebRTC">
 //     }
-//     navigator.mediaDevices
-//     .getUserMedia(constraints)
-//     .then((stream)  => successCallback(stream))
-//     .catch((error) => errorCallback(error));
-// }
-
-WebRTC.addEventListener('click', (event) => {
-    if(event.target.matches('.hangupicon')){
-        // navigator.getUserMedia({audio:false, video:false}, successCallback, function(error) {
-        //     log("navigator.getMedia error: ", error);})
-        $('.hangupicon').remove();
-        $('#vid').remove(); //Q: 不能用移除的，會無法重複使用
-        // $('videoicon').addClass();
     
-    var myIcon = document.getElementById('WebRTC');
-    var newIcon = document.createElement('div')
-    newIcon.innerHTML= `
-        <i class="videoicon fas fa-video fa-4x"></i>
-    `;
-    myIcon.appendChild(newIcon);
+// });
+// // var stream;
+// // var videoOff = {
+// //     video: false
+// // }
 
-    // var myVid = document.getElementById('WebRTC');
-    // var newVid = document.createElement('div')
-    // newVid.innerHTML= `
-    //     <video id="vid" autoplay></video>
-    // `;
-    // myVid.appendChild(newVid);
+// // function getMedia(constraints){
+// //     if(!!stream){
+// //         video.src = null;
+// //         stream.stop();
+// //     }
+// //     navigator.mediaDevices
+// //     .getUserMedia(constraints)
+// //     .then((stream)  => successCallback(stream))
+// //     .catch((error) => errorCallback(error));
+// // }
+
+// WebRTC.addEventListener('click', (event) => {
+//     if(event.target.matches('.hangupicon')){
+//         // navigator.getUserMedia({audio:false, video:false}, successCallback, function(error) {
+//         //     log("navigator.getMedia error: ", error);})
+//         $('.hangupicon').remove();
+//         $('#vid').remove(); //Q: 不能用移除的，會無法重複使用
+//         // $('videoicon').addClass();
+    
+//     var myIcon = document.getElementById('WebRTC');
+//     var newIcon = document.createElement('div')
+//     newIcon.innerHTML= `
+//         <i class="videoicon fas fa-video fa-4x"></i>
+//     `;
+//     myIcon.appendChild(newIcon);
+
+//     // var myVid = document.getElementById('WebRTC');
+//     // var newVid = document.createElement('div')
+//     // newVid.innerHTML= `
+//     //     <video id="vid" autoplay></video>
+//     // `;
+//     // myVid.appendChild(newVid);
  
         
-    location.reload();    
-    }
+//     location.reload();    
+//     }
     
-});
+// });
