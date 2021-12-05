@@ -1,192 +1,219 @@
-// addEventListener('keydown', (event) => {
-//     console.log(event.key); //可讀取輸入的內容
-//     console.log(event.keyCode); //偵測各個鍵的keyCode
-// });
+//JavaScript variables associated with send and receive channels
+var sendChannel, receiveChannel;
 
-var enterButton = document.getElementById('enter');
-var greetingWords = document.getElementById('greeting');
-var typeenterButton = document.getElementById('typeenter');
-var introline = document.getElementById('intro');
-var usernamebox = document.getElementById('username');
-var userInput = document.getElementById('user');
-function getName() {
-    if (event.target == enterButton) {
-        // enterButton.style.color = "tomato";
-        if ($('#user').val() != "") {
-            // $('#greeting').append("Hello,&nbsp;&nbsp;" + $('#user').val() + "!")
-            var chatingBox = document.getElementById('chatbox');
-            var chatingline = document.createElement('div');
-            newGreeting = "Welcome,&nbsp" + $('#user').val() + "!";
-            chatingline.innerHTML = newGreeting;
-            chatingline.style.color = 'white';
-            chatingBox.appendChild(chatingline);
-            // $('#username').remove();
-            introline.remove();
-            enterButton.remove();
-            removeEventListener('keydown', getName);
-            $('textarea').attr("disabled", false);
-            $('#typeenter').attr("disabled", false);
-            // $('#typingbox').removeAttr("disabled");
-            typeenterButton.style.color = 'white';
-            usernamebox.style.color = 'gray';
-            usernamebox.style.fontSize = '10px';
-            userInput.style.fontSize = '10px';
-            $('#user').attr("disabled", true);
-        } else {
-            // enterButton.style.color= "white";
-            alert('please enter username');
-        }
+//JavaScript variables associated with demo buttons
+var startButton = document.getElementById("startButton");
+var sendButton = document.getElementById("sendButton");
+var closeButton = document.getElementById("closeButton");
+
+
+//On startup, just the Start button must be enabled
+startButton.disabled = false;
+sendButton.disabled = true;
+closeButton.disabled = true;
+
+//Associate handlers with buttons
+startButton.onclick = createConnection;
+sendButton.onclick = sendData;
+closeButton.onclick = closeDataChannels;
+
+//Utility function for logging information to the JavaScript console
+function log(text) {
+    console.log("At time: " + (performance.now() / 1000).toFixed(3) +
+            " --> " + text);
+}
+
+function createConnection(){
+    //chrome
+    if(navigator.webkitGetUserMedia){
+        RTCPeerConnection = webkitRTCPeerConnection; 
+    }else if(navigator.mozGetUserMedia){ 
+        //firefox
+        RTCPeerConnection = mozRTCPeerConnection;
+        RTCSessionDescription = mozRTCSessionDescription;
+        RTCIceCandidate = mozRTCIceCandidate;
     }
-};
-console.log($('#user').val());
-// enterButton.addEventListener('click', getName);
-enterButton.onclick = getName;
-addEventListener('keydown', getName);
+    log("RTCPeerConnection object: " + RTCPeerConnection);
+    //this is an optional configuration string 
+    //associated with NAT Traversal setup
+    var servers = null ;
 
+    //Javascript variable associated wiith proper
+    //configuration of an RTCPeerConnection object:
+    //use DTLS/SRTP
+    var pc_constraints = {
+            'optional':[
+                {'DtlsSrtpKeyAgreement':true}
+            ]};
 
-// addEventListener('keyup', (event) => {
-//     enterButton.style.color= "white";
+    //Create the local peerconnection object..
+    //...with datachannels
+    localPeerConnection = new RTCPeerConnection(servers, pc_constraints);
+    log("Created local peer connection object, with data Channel");
 
-// });
-// addEventListener('keydown', (event) => {
-//     if (event.keyCode == 13) {
-//         console.log($('#user').val())
-//         enterButton.style.color= "tomato";
-//         if (userInput !== null) {
-//             $('#greeting').append("Hello,&nbsp;&nbsp;" + $('#user').val() + "!")
-//             $('#username').remove();  
-//             $('enterButton').remove();
-//         }
-//     removeEventListener('keydown',)
-//     }
-// });
-
-//chatarea, chatbox
-
-
-function sendEnter() {
-    // || event.keyCode == 13
-    if (event.target == typeenterButton) {
-        var data = document.querySelector('#typingbox').value;
-        // var data = $('#typingbox').val();
-        // console.log($('#user').val() + ":" + data);
-        var chatingBox = document.getElementById('chatbox');
-        var chatingline = document.createElement('div')
-        // newMessege = `
-        // <p>{$'#typingbox').val()}</p>
-        // <p>data</p>
-        // `
-        newMessege = $('#user').val() + ':&nbsp' + $('#typingbox').val();
-        chatingline.innerHTML = newMessege;
-        chatingline.style.color = 'white';
-        chatingBox.appendChild(chatingline);
-        $('#typingbox').val("");
+    try{//Note: SCTP-based reliable DataChannels supported in Chrome 29+
+        //use{reliable: false} if you have an older version of chrome
+        sendChannel = localPeerConnection.createDataChannel(
+        "sendDataChannel", {reliable: true});
+        log('Created reliable send data channel');
+    }catch(e){
+        alert('Failed to create data channel!');
+        log('createDataChannel() failed with following message: ' + e.message);
     }
-    if (event.keyCode == 13) {
-        var data = document.querySelector('#typingbox').value;
-        // var data = $('#typingbox').val();
-        // console.log($('#user').val() + ":" + data);
-        var chatingBox = document.getElementById('chatbox');
-        var chatingline = document.createElement('div')
-        // newMessege = `
-        // <p>{$'#typingbox').val()}</p>
-        // <p>data</p>
-        // `
-        newMessege = $('#user').val() + ':&nbsp' + $('#typingbox').val();
-        chatingline.innerHTML = newMessege;
-        chatingline.style.color = 'white';
-        chatingBox.appendChild(chatingline);
-        $('#typingbox').val("");
+    //Associate handlers with peer connection ICE events
+    localPeerConnection.onicecandidate = gotLocalCandidate;
+
+    //Associate handlers with data channel events
+    sendChannel.onopen = handleSendChannelStateChange;
+    sendChannel.onclose = handleSendChannelStateChange;
+
+    //micmic a remote peer connection
+    window.remotePeerConnection = new RTCPeerConnection(servers, pc_constraints);
+    log('Created remote peer connection object, with DataChannel');
+
+    // Associate handlers with peer connection ICE events...         
+    remotePeerConnection.onicecandidate = gotRemoteIceCandidate;         
+    // ...and data channel creation event         
+    remotePeerConnection.ondatachannel = gotReceiveChannel;
+    // We're all set! Let's start negotiating a session...         
+    localPeerConnection.createOffer(gotLocalDescription,onSignalingError);
+    // Disable Start button and enable Close button         
+    startButton.disabled = true;         
+    closeButton.disabled = false; 
+}
+
+function onSignalingError(error) {         
+    console.log('Failed to create signaling message : ' + error.name); }
+
+// Handler for sending data to the remote peer 
+function sendData() {         
+    var data = document.getElementById("dataChannelSend").value;         
+    sendChannel.send(data);         
+    log('Sent data: ' + data); 
+}
+
+//close button handler
+function closeDataChannels(){
+    // Close channels...         
+    log('Closing data channels');         
+    sendChannel.close();         
+    log('Closed data channel with label: ' + sendChannel.label);         
+    receiveChannel.close();         
+    log('Closed data channel with label: ' + receiveChannel.label); 
+    // Close peer connections         
+    localPeerConnection.close();         
+    remotePeerConnection.close();         
+    // Reset local variables         
+    localPeerConnection = null;         
+    remotePeerConnection = null;         
+    log('Closed peer connections'); 
+     // Rollback to the initial setup of the HTML5 page         
+     startButton.disabled = false;         
+     sendButton.disabled = true;         
+     closeButton.disabled = true;         
+     dataChannelSend.value = "";         
+     dataChannelReceive.value = "";         
+     dataChannelSend.disabled = true;         
+     dataChannelSend.placeholder = "1: Press Start; 2: Enter text; \
+                                             3: Press Send."; 
+}
+
+// Handler to be called as soon as the local SDP is made available to 
+// the application 
+function gotLocalDescription(desc) {         
+    // Set local SDP as the right (local/remote) description for both local         
+    // and remote parties         
+    
+    console.log("Desc :", desc);
+    localPeerConnection.setLocalDescription(desc);         
+    log('localPeerConnection\'s SDP: \n' + desc.sdp);         
+    remotePeerConnection.setRemoteDescription(desc);
+    // Create answer from the remote party, based on the local SDP         
+    remotePeerConnection.createAnswer(gotRemoteDescription, onSignalingError); 
+}
+
+// Handler to be called as soon as the remote SDP is made available to 
+// the application 
+function gotRemoteDescription(desc) {         
+    // Set remote SDP as the right (remote/local) description for both local         
+    // and remote parties         
+    console.log(remotePeerConnection.setLocalDescription(desc));
+
+    remotePeerConnection.setLocalDescription(desc);         
+    log('Answer from remotePeerConnection\'s SDP: \n' + desc.sdp);         
+    localPeerConnection.setRemoteDescription(desc); 
+}
+
+// Handler to be called whenever a new local ICE candidate becomes available 
+function gotLocalCandidate(event) {         
+    log('local ice callback');         
+    if (event.candidate) {                 
+        remotePeerConnection.addIceCandidate(event.candidate);                 
+        log('Local ICE candidate: \n' + event.candidate.candidate);         
+    } 
+}
+
+// Handler to be called whenever a new remote ICE candidate becomes available 
+function gotRemoteIceCandidate(event) {         
+    log('remote ice callback');         
+    if (event.candidate) {                 
+        localPeerConnection.addIceCandidate(event.candidate);                 
+        log('Remote ICE candidate: \n ' + event.candidate.candidate);         
+    } 
+}
+
+// Handler associated with the management of remote peer connection's 
+// data channel events 
+function gotReceiveChannel(event) {         
+    log('Receive Channel Callback: event --> ' + event);         
+    // Retrieve channel information         
+    receiveChannel = event.channel;
+    // Set handlers for the following events:         
+    // (i) open; (ii) message; (iii) close         
+    receiveChannel.onopen = handleReceiveChannelStateChange;
+    receiveChannel.onmessage = handleMessage;         
+    receiveChannel.onclose = handleReceiveChannelStateChange; 
+}
+
+// Message event handler 
+function handleMessage(event) {         
+    log('Received message: ' + event.data);         
+    // Show message in the HTML5 page         
+    document.getElementById("dataChannelReceive").value = event.data;         
+    // Clean 'Send' text area in the HTML page         
+    document.getElementById("dataChannelSend").value = ''; 
+}
+
+// Handler for either 'open' or 'close' events on sender's data channel 
+function handleSendChannelStateChange(){
+    var readyState = sendChannel.readyState;
+    log('Send channel state is: ' + readyState);
+    if(readyState == "open"){
+        //enable 'send' text area and set focus on it 
+        dataChannelSend.disabled = false;
+        dataChannelSend.focus();
+        dataChannelSend.placeholder = " ";
+        //Enable both Send and Close buttons
+        sendButton.disabled = false;
+        closeButton.disabled = false;
+    }else{
+        //event must be 'close', if we are here...
+        //Disable 'Send' text area 
+        dataChannelSend.disabled = true;
+        //Disable both Send and Close buttons
+        sendButton.disabled = true;
+        closeButton.disabled = true;
     }
-};
+}
 
-// typeenterButton.onclick = sendEnter; //與下同功
-typeenterButton.addEventListener('click', sendEnter); //與上同功
-addEventListener('keydown', sendEnter);
-
-
-//問題：新增的節點無所被索取ID
-//問題：textarea會空行
-
-
-// var video = document.querySelector('video');
-
-
-// function successCallback(gotstream){
-//     //Make the stream avaliable to the console for introspection
-//     window.stream = gotstream;
-//     //Attach the return stream to the <video> element in the HTML page
-//     video.srcObject = gotstream;
-//     video.play();
-
-//     $(".videoicon").remove();
-
-//     // const newIcon = document.createElement('div');
-//     var myIcon = document.getElementById('WebRTC');
-//     var newIcon = document.createElement('div')
-//     newIcon.innerHTML= `
-//         <i class="hangupicon fas fa-video-slash fa-2x"></i>
-//     `;
-//     // myIcon.appendChild(hangupIcon);
-
-//     myIcon.appendChild(newIcon);
-
-//     // el.innerHTML = '<i class="fas fa-video-slash"></i>'
-// }
+// Handler for either 'open' or 'close' events on receiver's data channel 
+function handleReceiveChannelStateChange() {         
+    var readyState = receiveChannel.readyState;         
+    log('Receive channel state is: ' + readyState); 
+}
 
 
 
-// WebRTC.addEventListener('click', (event) => {
-//     if(event.target.matches('.videoicon')){
-//         navigator.getUserMedia({audio:false, video:true}, successCallback, function(error) {
-//             log("navigator.getMedia error: ", error);
-//         });
-//         // 讓 video 移動至左上角   
-//         // 新增 掛電話icon: 功能- 移除影像、鏡頭
-//         // 插入 <video autoplay></video> 在 <div id="WebRTC">
-//     }
-    
-// });
-// // var stream;
-// // var videoOff = {
-// //     video: false
-// // }
 
-// // function getMedia(constraints){
-// //     if(!!stream){
-// //         video.src = null;
-// //         stream.stop();
-// //     }
-// //     navigator.mediaDevices
-// //     .getUserMedia(constraints)
-// //     .then((stream)  => successCallback(stream))
-// //     .catch((error) => errorCallback(error));
-// // }
 
-// WebRTC.addEventListener('click', (event) => {
-//     if(event.target.matches('.hangupicon')){
-//         // navigator.getUserMedia({audio:false, video:false}, successCallback, function(error) {
-//         //     log("navigator.getMedia error: ", error);})
-//         $('.hangupicon').remove();
-//         $('#vid').remove(); //Q: 不能用移除的，會無法重複使用
-//         // $('videoicon').addClass();
-    
-//     var myIcon = document.getElementById('WebRTC');
-//     var newIcon = document.createElement('div')
-//     newIcon.innerHTML= `
-//         <i class="videoicon fas fa-video fa-4x"></i>
-//     `;
-//     myIcon.appendChild(newIcon);
 
-//     // var myVid = document.getElementById('WebRTC');
-//     // var newVid = document.createElement('div')
-//     // newVid.innerHTML= `
-//     //     <video id="vid" autoplay></video>
-//     // `;
-//     // myVid.appendChild(newVid);
- 
-        
-//     location.reload();    
-//     }
-    
-// });
