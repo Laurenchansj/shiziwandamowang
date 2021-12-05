@@ -6,16 +6,20 @@
 
 <body>
          
-    <textarea rows="5" cols="50" id="dataChannelSend" disabled placeholder="                 
-    1: Press Start; 2: Enter text; 3: Press Send."></textarea>         
-        <textarea rows="5" cols="50" id="dataChannelReceive" disabled></textarea>
-    <div id="buttons">     
-      <button id="startButton">Start</button>     
-      <button id="sendButton">Send</button>     
-      <button id="closeButton">Stop</button>   
+    
+    <div>
+        <button class="initialBtn">初始化</button>
+      
+        <button class="joinBtn">join room</button>
+  
+        <button class="btnCall">send offer</button>
+                           
+        <video width="200" height="200" autoplay id="myVideo" muted playsinline></video>
+                              
+        <video width="500" height="500" autoplay id="remoteVideo" playsinline></video>
     </div>
     
-<script src="main.js"></script>
+    <script src="main.js"></script>
 
 </body> 
 </html> 
